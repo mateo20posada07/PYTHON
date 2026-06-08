@@ -37,13 +37,48 @@ Proyecto = NamedTuple("Proyecto", [
 ("recompensas", list[Recompensa]) 
 ]) 
 
-def lee_crowdfunding(fichero: str)->List[Proyecto]:
-    res=list()
-    with open(fichero, encoding='utf-8') as f:
-    lector=csv.reader(f)
-    next(lector)
-    for id, titulo, categoria, fechaInicio, fechaFin,objetivo, recompensas in lector:
-    
-        fechaInicio= date
-
+def lee_proyectos(ruta_fichero: str) -> list[Proyecto]:
+    res = []
+    with open (ruta_fichero, encoding="utf-8") as f:
+        lector = csv.reader(f)
+        next(lector)
+        for id,titulo,categoria,fecha_inicio,fecha_fin,objetivo,recompensas in lector:
+            id = id.strip()
+            fecha_inicio = parsea_fecha (fecha_inicio)
+            fecha_fin = parsea_fecha (fecha_fin)
+            objetivo = float(objetivo)
+            recompensas = parsea_recompensas(id[:2], recompensas)
+            res.append(Proyecto(id, titulo, categoria, fecha_inicio, fecha_fin, \
+            objetivo, recompensas))
+    return res
+def parsea_fecha(fecha_str: str) -> date:
+    return datetime.strptime(fecha_str, "%Y-%m-%d").date()
+def parsea_recompensas (origen: str, recompensas_str: str) -> list[Recompensa]:
+    res = []
+    origen = origen.upper()
+    separador = obtener_separador(origen)
+    trozos = recompensas_str.split(separador)
+    for trozo in trozos:
+        if origen == "KS":
+            recompensa = parsear_recompensa_ks(trozo)
+        elif origen == "CF":
+            recompensa = parsear_recompensa_cf(trozo)
+        if recompensa:
+         res.append(recompensa)
+    return res
+def obtener_separador (origen: str) -> str:
+    separador = ""
+    if origen == "KS":
+        separador =";"
+    elif origen == "CF":
+        separador ="|"
+    return separador
+def parsear_recompensa_ks(recompesa_str: str) -> Recompensa:
+    separador = ":"
+    importe, patrocinadores, nombre = recompesa_str.split(separador)
+    return Recompensa(nombre, float(importe), int(patrocinadores))
+def parsear_recompensa_cf(recompesa_str: str) -> Recompensa:
+    separador = "@"
+    nombre, importe, patrocinadores = recompesa_str.split(separador)
+    return Recompensa(nombre, float(importe), int(patrocinadores))
 
